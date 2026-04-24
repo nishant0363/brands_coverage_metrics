@@ -265,8 +265,8 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 
 <script>
 const BRANDS = ["reliance_smart","dmart","mcdonalds","kfc","dominos","subway","burger_king","amul_parlour","cafe_coffee_day","apollo_pharmacy","medplus","sbi_bank","hdfc_bank","icici_bank","jio_store","airtel_experience","zolo_pg", "the_helloworld_pg"];
-const BRAND_COLORS = {reliance_smart:'#1a56db',dmart:'#e3342f',mcdonalds:'#f6c90e',kfc:'#c0392b',dominos:'#004b87',subway:'#00703c',burger_king:'#d62300',amul_parlour:'#e67e22',cafe_coffee_day:'#6b3a2a',apollo_pharmacy:'#2980b9',medplus:'#27ae60',sbi_bank:'#1b5e20',hdfc_bank:'#004c97',icici_bank:'#f58220',jio_store:'#0070c0',airtel_experience:'#d62300',zolo_pg:'#00703c', 'the_helloworld_pg':'#8e44ad'};
-const BRAND_LABELS = {reliance_smart:'Reliance Smart',dmart:'D-Mart',mcdonalds:"McDonald's",kfc:'KFC',dominos:"Domino's",subway:'Subway',burger_king:'Burger King',amul_parlour:'Amul Parlour',cafe_coffee_day:'Café Coffee Day',apollo_pharmacy:'Apollo Pharmacy',medplus:'MedPlus',sbi_bank:'SBI Bank',hdfc_bank:'HDFC Bank',icici_bank:'ICICI Bank',jio_store:'Jio Store',airtel_experience:'Airtel Experience',zolo_pg:'Zolo PG', 'the_helloworld_pg':'The HelloWorld PG'};
+const BRAND_COLORS = {reliance_smart:'#1a56db',dmart:'#e3342f',mcdonalds:'#f6c90e',kfc:'#c0392b',dominos:'#004b87',subway:'#00703c',burger_king:'#d62300',amul_parlour:'#e67e22',cafe_coffee_day:'#6b3a2a',apollo_pharmacy:'#2980b9',medplus:'#27ae60',sbi_bank:'#1b5e20',hdfc_bank:'#004c97',icici_bank:'#f58220',jio_store:'#0070c0',airtel_experience:'#d62300',zolo_pg:'#00703c',the_helloworld_pg:'#8e44ad'};
+const BRAND_LABELS = {reliance_smart:'Reliance Smart',dmart:'D-Mart',mcdonalds:"McDonald's",kfc:'KFC',dominos:"Domino's",subway:'Subway',burger_king:'Burger King',amul_parlour:'Amul Parlour',cafe_coffee_day:'Café Coffee Day',apollo_pharmacy:'Apollo Pharmacy',medplus:'MedPlus',sbi_bank:'SBI Bank',hdfc_bank:'HDFC Bank',icici_bank:'ICICI Bank',jio_store:'Jio Store',airtel_experience:'Airtel Experience',zolo_pg:'Zolo PG', the_helloworld_pg:'The HelloWorld PG'};
 const BUFFER_KM = 0.03;
 
 let allPOI=[], allPolygons=[];
@@ -359,7 +359,7 @@ function parseWKT(wkt) {
 function addPolygonLayer() {
   const features = allPolygons.map(p=>{ const c=parseWKT(p.geometry); if(!c) return null; return {type:'Feature',properties:{hood_name:p.hood_name,cluster_name:p.cluster_name},geometry:{type:'Polygon',coordinates:[c]}}; }).filter(Boolean);
   map.addSource('polys',{type:'geojson',data:{type:'FeatureCollection',features}});
-  map.addLayer({id:'poly-fill',type:'fill',source:'polys',paint:{'fill-color':'#2563eb','fill-opacity':0.07}});
+  map.addLayer({id:'poly-fill',type:'fill',source:'polys',paint:{'fill-color':'#2563eb','fill-opacity':0.25}});
   map.addLayer({id:'poly-line',type:'line',source:'polys',paint:{'line-color':'#2563eb','line-width':1.2,'line-opacity':.5}});
   const pu = new maplibregl.Popup({closeButton:false,closeOnClick:false});
   map.on('mousemove','poly-fill',e=>{ if(!e.features.length) return; const f=e.features[0].properties; pu.setLngLat(e.lngLat).setHTML(`<div style="font-size:12px;font-family:'DM Sans',sans-serif"><b>${f.hood_name}</b><br><span style="color:#6b7280">${f.cluster_name}</span></div>`).addTo(map); map.getCanvas().style.cursor='pointer'; });
@@ -422,12 +422,13 @@ function computeStats() {
 
   const totalNMs=nmStats.length, coveredNMs=nmStats.filter(n=>n.covered).length;
   const coveragePct=totalNMs?Math.round(coveredNMs/totalNMs*100):0;
-  const density=coveredNMs?(poi.length/coveredNMs).toFixed(2):'0.00';
+  const bufferedPOI=nmStats.reduce((sum,n)=>sum+n.poiCount,0);
+  const density=coveredNMs?(bufferedPOI/coveredNMs).toFixed(2):'0.00';
 
   const clusterMap={};
   nmStats.forEach(n=>{ const c=n.cluster_name||'Unknown'; if(!clusterMap[c]) clusterMap[c]={totalNMs:0,coveredNMs:0,poiCount:0}; clusterMap[c].totalNMs++; if(n.covered) clusterMap[c].coveredNMs++; clusterMap[c].poiCount+=n.poiCount; });
 
-  return {nmStats,totalNMs,coveredNMs,coveragePct,density,totalPOI:poi.length,clusterMap};
+  return {nmStats,totalNMs,coveredNMs,coveragePct,density,totalPOI:poi.length,bufferedPOI,clusterMap};
 }
 
 function updateAll() {
@@ -441,7 +442,7 @@ function updateAll() {
 function renderOverall(s) {
   setText('oNMCov',s.coveredNMs); setText('oNMDesc',`of ${s.totalNMs} total NMs`); setW('oNMBar',s.coveragePct);
   setText('oCovPct',s.coveragePct+'%'); setW('oCovBar',s.coveragePct);
-  setText('oDensity',s.density); setText('oTotal',s.totalPOI);
+  setText('oDensity',s.density); setText('oTotal',s.bufferedPOI);
   const sel=selectedBrands.size===BRANDS.length?'all brands':selectedBrands.size===0?'no brands selected':`${selectedBrands.size} brand${selectedBrands.size>1?'s':''} selected`;
   setText('oBrandDesc',sel);
 }
