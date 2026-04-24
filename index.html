@@ -19,7 +19,6 @@
   --r:14px; --sh:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
 }
 html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
-/* HEADER */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:300;}
 .hdr-logo{font-size:19px;font-weight:700;letter-spacing:-.5px;}
 .hdr-logo span{color:var(--accent);}
@@ -30,7 +29,6 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 .dot.err{background:var(--red);}
 .dot.spin{background:transparent;border:2px solid var(--accent);border-top-color:transparent;animation:rot .7s linear infinite;}
 @keyframes rot{to{transform:rotate(360deg);}}
-/* BRAND BAR */
 .brand-bar{background:#fff;border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .bar-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .chips-wrap{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
@@ -42,14 +40,11 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 .chip-none{background:#f3f4f6;color:var(--muted);border-color:var(--border);}
 .chip-none:hover{background:#e5e7eb;}
 .bar-hint{font-size:11px;color:var(--muted);white-space:nowrap;font-style:italic;}
-/* MAIN */
 .main{padding:18px 24px;display:flex;flex-direction:column;gap:16px;}
-/* CARD */
 .card{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;}
 .card-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 18px 10px;border-bottom:1px solid var(--border);}
 .card-title{font-size:14px;font-weight:700;}
 .card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-/* SETUP */
 .setup-body{padding:16px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
 .inp-group{display:flex;flex-direction:column;gap:5px;}
 .inp-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
@@ -59,7 +54,6 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 .fetch-btn:hover{background:#1d4ed8;}
 .fetch-btn:disabled{background:#93c5fd;cursor:not-allowed;}
 .setup-hint{font-size:11px;color:var(--muted);line-height:1.6;}
-/* MAP */
 #map{width:100%;height:520px;}
 .layer-row{padding:9px 18px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 .lyr-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-right:4px;}
@@ -71,7 +65,6 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 .leg-row{display:flex;align-items:center;gap:7px;padding:2px 0;}
 .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .leg-name{color:#374151;}
-/* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;}
 @media(max-width:960px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
 .stat-card{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);padding:15px 17px;display:flex;flex-direction:column;gap:5px;}
@@ -83,10 +76,8 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 .stat-desc{font-size:11px;color:var(--muted);}
 .sbar{height:4px;border-radius:2px;background:var(--border);margin-top:3px;}
 .sbar-f{height:100%;border-radius:2px;background:var(--accent);transition:width .5s ease;}
-/* SECTION TITLE */
 .sec-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
-/* TABLES */
 .tables-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 @media(max-width:1100px){.tables-row{grid-template-columns:1fr;}}
 .tbl-scroll{max-height:360px;overflow:auto;}
@@ -150,7 +141,9 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
     <div class="setup-body">
       <div class="inp-group" style="flex:1;">
         <label>Apps Script Web App URL</label>
-        <input class="url-input" id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec"/>
+        <input class="url-input" id="scriptUrl" type="text"
+          placeholder="https://script.google.com/macros/s/…/exec"
+          value="https://script.google.com/macros/s/AKfycbxj2Ea8lo7xNbMYKS3qcY8lGjSiwmiCi_fgOd0LySMy8LMEmLZMDq5P2Ab4QJXoUWVn/exec"/>
       </div>
       <button class="fetch-btn" id="fetchBtn" onclick="fetchData()">⬇ Fetch Data</button>
     </div>
@@ -233,6 +226,35 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
     </div>
   </div>
 
+  <!-- CLUSTER OVERALL STATS -->
+  <div id="clusterOverallSection" style="display:none;">
+    <div class="sec-title">🗂 Cluster Coverage — Overall</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-lbl">Clusters Covered</div>
+        <div class="stat-val g" id="cClCov">—</div>
+        <div class="stat-desc" id="cClDesc">of — total clusters</div>
+        <div class="sbar"><div class="sbar-f" id="cClBar" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Coverage %</div>
+        <div class="stat-val b" id="cClPct">—</div>
+        <div class="stat-desc">Clusters with ≥1 brand within 30 m buffer</div>
+        <div class="sbar"><div class="sbar-f" id="cClPctBar" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Brand Density</div>
+        <div class="stat-val a" id="cClDensity">—</div>
+        <div class="stat-desc">POI per covered cluster</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Total POI Points</div>
+        <div class="stat-val" id="cClTotal">—</div>
+        <div class="stat-desc" id="cClBrandDesc">across all clusters</div>
+      </div>
+    </div>
+  </div>
+
   <!-- CLUSTER STAT CARDS -->
   <div id="clusterStatSection" style="display:none;">
     <div class="sec-title">📍 Cluster-Level Stats</div>
@@ -242,9 +264,9 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);
 </div>
 
 <script>
-const BRANDS = ["reliance_smart","dmart","mcdonalds","kfc","dominos","subway","burger_king","amul_parlour","cafe_coffee_day","apollo_pharmacy","medplus","sbi_bank","hdfc_bank","icici_bank","jio_store","airtel_experience" ,"zolo_pg"];
-const BRAND_COLORS = {reliance_smart:'#1a56db',dmart:'#e3342f',mcdonalds:'#f6c90e',kfc:'#c0392b',dominos:'#004b87',subway:'#00703c',burger_king:'#d62300',amul_parlour:'#e67e22',cafe_coffee_day:'#6b3a2a',apollo_pharmacy:'#2980b9',medplus:'#27ae60',sbi_bank:'#1b5e20',hdfc_bank:'#004c97',icici_bank:'#f58220',jio_store:'#0070c0', airtel_experience:'#d62300' , zolo_pg:'#00703c'};
-const BRAND_LABELS = {reliance_smart:'Reliance Smart',dmart:'D-Mart',mcdonalds:"McDonald's",kfc:'KFC',dominos:"Domino's",subway:'Subway',burger_king:'Burger King',amul_parlour:'Amul Parlour',cafe_coffee_day:'Café Coffee Day',apollo_pharmacy:'Apollo Pharmacy',medplus:'MedPlus',sbi_bank:'SBI Bank',hdfc_bank:'HDFC Bank',icici_bank:'ICICI Bank',jio_store:'Jio Store', airtel_experience: 'Airtel Experience', zolo_pg: 'Zolo PG' };
+const BRANDS = ["reliance_smart","dmart","mcdonalds","kfc","dominos","subway","burger_king","amul_parlour","cafe_coffee_day","apollo_pharmacy","medplus","sbi_bank","hdfc_bank","icici_bank","jio_store","airtel_experience","zolo_pg", "the_helloworld_pg"];
+const BRAND_COLORS = {reliance_smart:'#1a56db',dmart:'#e3342f',mcdonalds:'#f6c90e',kfc:'#c0392b',dominos:'#004b87',subway:'#00703c',burger_king:'#d62300',amul_parlour:'#e67e22',cafe_coffee_day:'#6b3a2a',apollo_pharmacy:'#2980b9',medplus:'#27ae60',sbi_bank:'#1b5e20',hdfc_bank:'#004c97',icici_bank:'#f58220',jio_store:'#0070c0',airtel_experience:'#d62300',zolo_pg:'#00703c', 'the_helloworld_pg':'#8e44ad'};
+const BRAND_LABELS = {reliance_smart:'Reliance Smart',dmart:'D-Mart',mcdonalds:"McDonald's",kfc:'KFC',dominos:"Domino's",subway:'Subway',burger_king:'Burger King',amul_parlour:'Amul Parlour',cafe_coffee_day:'Café Coffee Day',apollo_pharmacy:'Apollo Pharmacy',medplus:'MedPlus',sbi_bank:'SBI Bank',hdfc_bank:'HDFC Bank',icici_bank:'ICICI Bank',jio_store:'Jio Store',airtel_experience:'Airtel Experience',zolo_pg:'Zolo PG', 'the_helloworld_pg':'The HelloWorld PG'};
 const BUFFER_KM = 0.03;
 
 let allPOI=[], allPolygons=[];
@@ -252,14 +274,12 @@ let selectedBrands = new Set(BRANDS);
 let layerVisible = {};
 let map, mapReady = false;
 
-// ── STATUS ────────────────────────────────────────────────────────────────────
 function setStatus(msg, state) {
   document.getElementById('statusText').textContent = msg;
   const d = document.getElementById('statusDot');
   d.className = 'dot' + (state===true?' ok':state===false?' err':' spin');
 }
 
-// ── FETCH FROM APPS SCRIPT ────────────────────────────────────────────────────
 async function fetchData() {
   const url = document.getElementById('scriptUrl').value.trim();
   if (!url) { alert('Please paste your Apps Script Web App URL'); return; }
@@ -284,19 +304,17 @@ async function fetchData() {
   }
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
 function initDashboard() {
   selectedBrands = new Set(BRANDS);
   BRANDS.forEach(b => layerVisible[b] = true);
   buildChips();
-  ['brandBar','mapCard','overallSection','tablesRow','clusterStatSection'].forEach(id => {
+  ['brandBar','mapCard','overallSection','tablesRow','clusterOverallSection','clusterStatSection'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = id==='tablesRow'?'grid':id==='brandBar'?'flex':'block';
   });
   if (!mapReady) initMap(); else updateAll();
 }
 
-// ── CHIPS ─────────────────────────────────────────────────────────────────────
 function buildChips() {
   const wrap = document.getElementById('chipWrap');
   wrap.innerHTML = '';
@@ -321,7 +339,6 @@ function syncChips() {
   });
 }
 
-// ── MAP ───────────────────────────────────────────────────────────────────────
 function initMap() {
   map = new maplibregl.Map({
     container:'map',
@@ -391,7 +408,6 @@ function updateMapVis() {
   document.getElementById('mapPtCount').textContent=`${cnt} points shown`;
 }
 
-// ── ANALYTICS ─────────────────────────────────────────────────────────────────
 function getPOI(){ return allPOI.filter(r=>selectedBrands.has(r.brand)); }
 
 function computeStats() {
@@ -418,7 +434,7 @@ function updateAll() {
   updateMapVis();
   setTimeout(()=>{
     const s=computeStats();
-    renderOverall(s); renderNMTable(s); renderClusterTable(s); renderClusterCards(s);
+    renderOverall(s); renderNMTable(s); renderClusterTable(s); renderClusterOverall(s); renderClusterCards(s);
   },20);
 }
 
@@ -446,6 +462,22 @@ function renderClusterTable(s) {
     const col=pct>=66?'var(--green)':pct>=33?'var(--amber)':'var(--red)';
     return `<tr><td style="font-weight:600;max-width:140px;white-space:normal;font-size:12px;">${name}</td><td class="r">${c.totalNMs}</td><td class="r"><span class="badge ${c.coveredNMs>0?'bg':'bx'}">${c.coveredNMs}</span></td><td class="r"><div class="mbar"><div class="mbar-t"><div class="mbar-f" style="width:${pct}%;background:${col}"></div></div><span class="mbar-p">${pct}%</span></div></td><td class="r"><span class="badge bb">${c.poiCount}</span></td></tr>`;
   }).join('');
+}
+
+function renderClusterOverall(s) {
+  const clusters = Object.values(s.clusterMap);
+  const totalClusters = clusters.length;
+  const coveredClusters = clusters.filter(c => c.coveredNMs > 0).length;
+  const coveragePct = totalClusters ? Math.round(coveredClusters / totalClusters * 100) : 0;
+  const totalPOI = clusters.reduce((sum, c) => sum + c.poiCount, 0);
+  const density = coveredClusters ? (totalPOI / coveredClusters).toFixed(2) : '0.00';
+  setText('cClCov', coveredClusters);
+  setText('cClDesc', `of ${totalClusters} total clusters`);
+  setW('cClBar', coveragePct);
+  setText('cClPct', coveragePct + '%');
+  setW('cClPctBar', coveragePct);
+  setText('cClDensity', density);
+  setText('cClTotal', totalPOI);
 }
 
 function renderClusterCards(s) {
