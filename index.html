@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Brand POI Dashboard – Bengaluru</title>
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f0f2f5; --surface:#fff; --border:#e4e7ec; --text:#1a1d23; --muted:#6b7280;
+  --accent:#2563eb; --accent-lt:#eff6ff;
+  --green:#16a34a; --green-lt:#f0fdf4;
+  --amber:#d97706; --amber-lt:#fffbeb;
+  --red:#dc2626; --red-lt:#fef2f2;
+  --r:14px; --sh:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+}
+html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:300;}
+.hdr-logo{font-size:19px;font-weight:700;letter-spacing:-.5px;}
+.hdr-logo span{color:var(--accent);}
+.hdr-sub{font-size:12px;color:var(--muted);font-weight:500;margin-top:1px;}
+.hdr-status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+.dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;flex-shrink:0;}
+.dot.ok{background:var(--green);}
+.dot.err{background:var(--red);}
+.dot.spin{background:transparent;border:2px solid var(--accent);border-top-color:transparent;animation:rot .7s linear infinite;}
+@keyframes rot{to{transform:rotate(360deg);}}
+/* BRAND BAR */
+.brand-bar{background:#fff;border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.bar-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.chips-wrap{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
+.chip{padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .13s;white-space:nowrap;font-family:inherit;user-select:none;}
+.chip:hover{border-color:#94a3b8;color:var(--text);}
+.chip.active{color:#fff;border-color:transparent;font-weight:600;}
+.chip-all{background:var(--text);color:#fff;border-color:var(--text);}
+.chip-all:hover{opacity:.85;}
+.chip-none{background:#f3f4f6;color:var(--muted);border-color:var(--border);}
+.chip-none:hover{background:#e5e7eb;}
+.bar-hint{font-size:11px;color:var(--muted);white-space:nowrap;font-style:italic;}
+/* MAIN */
+.main{padding:18px 24px;display:flex;flex-direction:column;gap:16px;}
+/* CARD */
+.card{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);overflow:hidden;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 18px 10px;border-bottom:1px solid var(--border);}
+.card-title{font-size:14px;font-weight:700;}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+/* SETUP */
+.setup-body{padding:16px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+.inp-group{display:flex;flex-direction:column;gap:5px;}
+.inp-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.url-input{width:420px;max-width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;outline:none;}
+.url-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.fetch-btn{padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .13s;white-space:nowrap;}
+.fetch-btn:hover{background:#1d4ed8;}
+.fetch-btn:disabled{background:#93c5fd;cursor:not-allowed;}
+.setup-hint{font-size:11px;color:var(--muted);line-height:1.6;}
+/* MAP */
+#map{width:100%;height:520px;}
+.layer-row{padding:9px 18px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.lyr-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-right:4px;}
+.lbtn{padding:3px 11px;border-radius:8px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .13s;font-family:inherit;}
+.lbtn:hover{border-color:#94a3b8;color:var(--text);}
+.lbtn.on{color:#fff;border-color:transparent;}
+.map-legend{position:absolute;bottom:28px;right:10px;z-index:10;background:rgba(255,255,255,.97);border-radius:10px;padding:10px 12px;box-shadow:var(--sh);font-size:11px;max-height:240px;overflow-y:auto;min-width:120px;}
+.leg-title{font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;font-size:10px;}
+.leg-row{display:flex;align-items:center;gap:7px;padding:2px 0;}
+.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.leg-name{color:#374151;}
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;}
+@media(max-width:960px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--sh);padding:15px 17px;display:flex;flex-direction:column;gap:5px;}
+.stat-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.stat-val{font-size:27px;font-weight:700;font-family:'DM Mono',monospace;line-height:1.1;}
+.stat-val.g{color:var(--green);}
+.stat-val.b{color:var(--accent);}
+.stat-val.a{color:var(--amber);}
+.stat-desc{font-size:11px;color:var(--muted);}
+.sbar{height:4px;border-radius:2px;background:var(--border);margin-top:3px;}
+.sbar-f{height:100%;border-radius:2px;background:var(--accent);transition:width .5s ease;}
+/* SECTION TITLE */
+.sec-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 4px;display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+/* TABLES */
+.tables-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:1100px){.tables-row{grid-template-columns:1fr;}}
+.tbl-scroll{max-height:360px;overflow:auto;}
+.dtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.dtbl th{background:#f8f9fb;padding:8px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:2px solid var(--border);position:sticky;top:0;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;z-index:1;}
+.dtbl th.r,.dtbl td.r{text-align:center;}
+.dtbl td{padding:7px 12px;border-bottom:1px solid #f1f3f5;vertical-align:middle;white-space:nowrap;}
+.dtbl tr:hover td{background:var(--accent-lt);}
+.dtbl tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.bg{background:var(--green-lt);color:var(--green);}
+.ba{background:var(--amber-lt);color:var(--amber);}
+.br{background:var(--red-lt);color:var(--red);}
+.bb{background:var(--accent-lt);color:var(--accent);}
+.bx{background:#f3f4f6;color:var(--muted);}
+.mbar{display:flex;align-items:center;gap:5px;}
+.mbar-t{flex:1;height:5px;background:var(--border);border-radius:3px;min-width:36px;}
+.mbar-f{height:100%;border-radius:3px;transition:width .4s;}
+.mbar-p{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);width:30px;text-align:right;}
+/* CLUSTER STAT CARDS */
+.cl-stat-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-width:190px;flex:1;box-shadow:var(--sh);}
+.cl-name{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.cl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cl-metric-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.cl-metric-val{font-size:19px;font-weight:700;font-family:'DM Mono',monospace;}
+.cl-bar{margin-top:8px;height:5px;background:var(--border);border-radius:3px;}
+.cl-bar-f{height:100%;border-radius:3px;transition:width .4s;}
+/* POPUP */
+.maplibregl-popup-content{font-family:'DM Sans',sans-serif;padding:12px 14px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:13px;line-height:1.6;min-width:180px;max-width:280px;}
+.pu-brand{display:inline-block;font-size:10px;font-weight:600;background:var(--accent-lt);color:var(--accent);padding:1px 8px;border-radius:10px;margin-bottom:5px;}
+.pu-name{font-weight:700;font-size:14px;margin-bottom:6px;}
+.pu-row{display:flex;gap:5px;color:#555;font-size:12px;margin-bottom:2px;}
+.pu-row b{color:var(--text);min-width:38px;}
+.pu-gmap{display:inline-block;margin-top:9px;padding:5px 13px;background:var(--accent);color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;}
+.pu-gmap:hover{background:#1d4ed8;}
+.empty{padding:36px;text-align:center;color:var(--muted);font-size:13px;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:10px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-logo">Brand<span>POI</span> Analytics</div>
+    <div class="hdr-sub">Bengaluru · Neighbourhood Coverage Intelligence</div>
+  </div>
+  <div class="hdr-status">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">Paste your Apps Script URL and click Fetch</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- SETUP -->
+  <div class="card" id="setupCard">
+    <div class="card-hd">
+      <div><div class="card-title">⚙️ Data Source</div><div class="card-sub">Paste the deployed Google Apps Script Web App URL</div></div>
+    </div>
+    <div class="setup-body">
+      <div class="inp-group" style="flex:1;">
+        <label>Apps Script Web App URL</label>
+        <input class="url-input" id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec"/>
+      </div>
+      <button class="fetch-btn" id="fetchBtn" onclick="fetchData()">⬇ Fetch Data</button>
+    </div>
+    <div style="padding:0 18px 14px;">
+      <div class="setup-hint">
+        ℹ️ In your Google Sheet → Extensions → Apps Script → paste <code>Code.gs</code> → Deploy as Web App (Execute as: Me, Access: Anyone) → copy URL here.<br>
+        The script reads tabs <b>"brands in blr"</b> and <b>"hoods blr"</b>.
+      </div>
+    </div>
+  </div>
+
+  <!-- BRAND MULTI-SELECT BAR -->
+  <div class="brand-bar" id="brandBar" style="display:none;">
+    <span class="bar-label">Brands</span>
+    <div class="chips-wrap" id="chipWrap"></div>
+    <span class="bar-hint">Multi-select · click to toggle</span>
+  </div>
+
+  <!-- MAP -->
+  <div class="card" id="mapCard" style="display:none;">
+    <div class="card-hd">
+      <div><div class="card-title">🗺 Coverage Map</div><div class="card-sub">NM polygon base · brand POI overlay · click point for details + Google Maps link</div></div>
+      <div style="font-size:12px;color:var(--muted);" id="mapPtCount"></div>
+    </div>
+    <div class="layer-row" id="layerRow"><span class="lyr-label">Layers</span></div>
+    <div style="position:relative;">
+      <div id="map"></div>
+      <div class="map-legend" id="mapLegend"></div>
+    </div>
+  </div>
+
+  <!-- OVERALL STATS -->
+  <div id="overallSection" style="display:none;">
+    <div class="sec-title">📊 Overall — Selected Brands</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-lbl">NMs Covered</div>
+        <div class="stat-val g" id="oNMCov">—</div>
+        <div class="stat-desc" id="oNMDesc">of — total NMs</div>
+        <div class="sbar"><div class="sbar-f" id="oNMBar" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Coverage %</div>
+        <div class="stat-val b" id="oCovPct">—</div>
+        <div class="stat-desc">NMs with ≥1 brand within 30 m buffer</div>
+        <div class="sbar"><div class="sbar-f" id="oCovBar" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Brand Density</div>
+        <div class="stat-val a" id="oDensity">—</div>
+        <div class="stat-desc">POI per covered NM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Total POI Points</div>
+        <div class="stat-val" id="oTotal">—</div>
+        <div class="stat-desc" id="oBrandDesc">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NM + CLUSTER TABLE -->
+  <div class="tables-row" id="tablesRow" style="display:none;">
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title">🏘 Neighbourhood (NM) Detail</div><div class="card-sub">Per hood_name · 30 m buffer coverage</div></div></div>
+      <div class="tbl-scroll">
+        <table class="dtbl">
+          <thead><tr><th>Hood Name</th><th>Cluster</th><th class="r">POI Count</th><th class="r">Covered?</th></tr></thead>
+          <tbody id="nmTbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div><div class="card-title">🗂 Cluster Table</div><div class="card-sub">Aggregated by cluster_name</div></div></div>
+      <div class="tbl-scroll">
+        <table class="dtbl">
+          <thead><tr><th>Cluster</th><th class="r">Total NMs</th><th class="r">NMs Covered</th><th class="r">Coverage %</th><th class="r">POI Count</th></tr></thead>
+          <tbody id="clusterTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER STAT CARDS -->
+  <div id="clusterStatSection" style="display:none;">
+    <div class="sec-title">📍 Cluster-Level Stats</div>
+    <div id="clusterStatCards" style="display:flex;flex-wrap:wrap;gap:13px;"></div>
+  </div>
+
+</div>
+
+<script>
+const BRANDS = ["reliance_smart","dmart","mcdonalds","kfc","dominos","subway","burger_king","amul_parlour","cafe_coffee_day","apollo_pharmacy","medplus","sbi_bank","hdfc_bank","icici_bank","jio_store","airtel_experience" ,"zolo_pg"];
+const BRAND_COLORS = {reliance_smart:'#1a56db',dmart:'#e3342f',mcdonalds:'#f6c90e',kfc:'#c0392b',dominos:'#004b87',subway:'#00703c',burger_king:'#d62300',amul_parlour:'#e67e22',cafe_coffee_day:'#6b3a2a',apollo_pharmacy:'#2980b9',medplus:'#27ae60',sbi_bank:'#1b5e20',hdfc_bank:'#004c97',icici_bank:'#f58220',jio_store:'#0070c0', airtel_experience:'#d62300' , zolo_pg:'#00703c'};
+const BRAND_LABELS = {reliance_smart:'Reliance Smart',dmart:'D-Mart',mcdonalds:"McDonald's",kfc:'KFC',dominos:"Domino's",subway:'Subway',burger_king:'Burger King',amul_parlour:'Amul Parlour',cafe_coffee_day:'Café Coffee Day',apollo_pharmacy:'Apollo Pharmacy',medplus:'MedPlus',sbi_bank:'SBI Bank',hdfc_bank:'HDFC Bank',icici_bank:'ICICI Bank',jio_store:'Jio Store', airtel_experience: 'Airtel Experience', zolo_pg: 'Zolo PG' };
+const BUFFER_KM = 0.03;
+
+let allPOI=[], allPolygons=[];
+let selectedBrands = new Set(BRANDS);
+let layerVisible = {};
+let map, mapReady = false;
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+function setStatus(msg, state) {
+  document.getElementById('statusText').textContent = msg;
+  const d = document.getElementById('statusDot');
+  d.className = 'dot' + (state===true?' ok':state===false?' err':' spin');
+}
+
+// ── FETCH FROM APPS SCRIPT ────────────────────────────────────────────────────
+async function fetchData() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) { alert('Please paste your Apps Script Web App URL'); return; }
+  const btn = document.getElementById('fetchBtn');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  setStatus('Fetching from Google Sheets…', null);
+  try {
+    const [bRes, hRes] = await Promise.all([
+      fetch(url + '?type=brands').then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }),
+      fetch(url + '?type=hoods').then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    ]);
+    if (bRes.error) throw new Error('Brands tab: ' + bRes.error);
+    if (hRes.error) throw new Error('Hoods tab: '  + hRes.error);
+    allPOI = bRes.filter(r => r.lat && r.lon && parseFloat(r.lat) && parseFloat(r.lon));
+    allPolygons = hRes.filter(r => r.geometry);
+    setStatus(`✓ ${allPOI.length} POIs · ${allPolygons.length} polygons loaded`, true);
+    btn.textContent = '↺ Re-fetch'; btn.disabled = false;
+    initDashboard();
+  } catch(e) {
+    setStatus('Error: ' + e.message, false);
+    btn.textContent = '⬇ Fetch Data'; btn.disabled = false;
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+function initDashboard() {
+  selectedBrands = new Set(BRANDS);
+  BRANDS.forEach(b => layerVisible[b] = true);
+  buildChips();
+  ['brandBar','mapCard','overallSection','tablesRow','clusterStatSection'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id==='tablesRow'?'grid':id==='brandBar'?'flex':'block';
+  });
+  if (!mapReady) initMap(); else updateAll();
+}
+
+// ── CHIPS ─────────────────────────────────────────────────────────────────────
+function buildChips() {
+  const wrap = document.getElementById('chipWrap');
+  wrap.innerHTML = '';
+  const mkBtn = (label, cls, fn) => { const b=document.createElement('button'); b.className=cls; b.textContent=label; b.onclick=fn; return b; };
+  wrap.appendChild(mkBtn('All','chip chip-all', ()=>{ selectedBrands=new Set(BRANDS); syncChips(); updateAll(); }));
+  wrap.appendChild(mkBtn('None','chip chip-none', ()=>{ selectedBrands=new Set(); syncChips(); updateAll(); }));
+  BRANDS.forEach(b => {
+    const c = mkBtn(BRAND_LABELS[b],'chip active', ()=>toggleBrand(b));
+    c.id = 'chip-'+b; c.style.background=BRAND_COLORS[b]; c.style.color='#fff';
+    wrap.appendChild(c);
+  });
+}
+function toggleBrand(b) {
+  if (selectedBrands.has(b)) selectedBrands.delete(b); else selectedBrands.add(b);
+  syncChips(); updateAll();
+}
+function syncChips() {
+  BRANDS.forEach(b => {
+    const c = document.getElementById('chip-'+b); if(!c) return;
+    if (selectedBrands.has(b)) { c.classList.add('active'); c.style.background=BRAND_COLORS[b]; c.style.color='#fff'; }
+    else { c.classList.remove('active'); c.style.background='#fff'; c.style.color='var(--muted)'; }
+  });
+}
+
+// ── MAP ───────────────────────────────────────────────────────────────────────
+function initMap() {
+  map = new maplibregl.Map({
+    container:'map',
+    style:{ version:8, sources:{ osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap'} }, layers:[{id:'osm',type:'raster',source:'osm'}] },
+    center:[77.62,12.97], zoom:11
+  });
+  map.addControl(new maplibregl.NavigationControl(),'top-right');
+  map.on('load',()=>{ mapReady=true; addPolygonLayer(); BRANDS.forEach(b=>addBrandLayer(b)); buildLayerRow(); buildLegend(); updateAll(); });
+}
+
+function parseWKT(wkt) {
+  try {
+    const inner = wkt.replace(/POLYGON\s*\(\(/,'').replace(/\)\)\s*$/,'').trim();
+    return inner.split(',').map(p=>{ const [x,y]=p.trim().split(/\s+/); return [parseFloat(x),parseFloat(y)]; });
+  } catch(e){ return null; }
+}
+
+function addPolygonLayer() {
+  const features = allPolygons.map(p=>{ const c=parseWKT(p.geometry); if(!c) return null; return {type:'Feature',properties:{hood_name:p.hood_name,cluster_name:p.cluster_name},geometry:{type:'Polygon',coordinates:[c]}}; }).filter(Boolean);
+  map.addSource('polys',{type:'geojson',data:{type:'FeatureCollection',features}});
+  map.addLayer({id:'poly-fill',type:'fill',source:'polys',paint:{'fill-color':'#2563eb','fill-opacity':0.07}});
+  map.addLayer({id:'poly-line',type:'line',source:'polys',paint:{'line-color':'#2563eb','line-width':1.2,'line-opacity':.5}});
+  const pu = new maplibregl.Popup({closeButton:false,closeOnClick:false});
+  map.on('mousemove','poly-fill',e=>{ if(!e.features.length) return; const f=e.features[0].properties; pu.setLngLat(e.lngLat).setHTML(`<div style="font-size:12px;font-family:'DM Sans',sans-serif"><b>${f.hood_name}</b><br><span style="color:#6b7280">${f.cluster_name}</span></div>`).addTo(map); map.getCanvas().style.cursor='pointer'; });
+  map.on('mouseleave','poly-fill',()=>{ pu.remove(); map.getCanvas().style.cursor=''; });
+}
+
+function addBrandLayer(brand) {
+  const feats = allPOI.filter(r=>r.brand===brand).map(r=>({type:'Feature',properties:{...r},geometry:{type:'Point',coordinates:[parseFloat(r.lon),parseFloat(r.lat)]}}));
+  map.addSource('b_'+brand,{type:'geojson',data:{type:'FeatureCollection',features:feats}});
+  map.addLayer({id:'l_'+brand,type:'circle',source:'b_'+brand,paint:{'circle-radius':6,'circle-color':BRAND_COLORS[brand],'circle-stroke-width':1.5,'circle-stroke-color':'#fff','circle-opacity':0.88}});
+  map.on('click','l_'+brand,e=>{
+    const p=e.features[0].properties; const [lng,lat]=e.features[0].geometry.coordinates;
+    const gm=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(`<div class="pu-brand">${BRAND_LABELS[brand]}</div><div class="pu-name">${p.name||'(unnamed)'}</div><div class="pu-row"><b>Addr:</b><span>${p.address||'—'}</span></div><div class="pu-row"><b>Rating:</b><span>${p.rating||'—'}${p.user_ratings_total?' ('+p.user_ratings_total+' reviews)':''}</span></div><a class="pu-gmap" href="${gm}" target="_blank">📍 Open in Google Maps</a>`).addTo(map);
+  });
+  map.on('mouseenter','l_'+brand,()=>{ map.getCanvas().style.cursor='pointer'; });
+  map.on('mouseleave','l_'+brand,()=>{ map.getCanvas().style.cursor=''; });
+}
+
+function buildLayerRow() {
+  const row = document.getElementById('layerRow');
+  const pb = document.createElement('button');
+  pb.className='lbtn on'; pb.style.background='#1e293b'; pb.style.color='#fff'; pb.style.border='none';
+  pb.textContent='⬡ NM Polygons'; pb.dataset.on='true';
+  pb.onclick=()=>{ const on=pb.dataset.on==='true'; ['poly-fill','poly-line'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'none':'visible')); pb.dataset.on=on?'false':'true'; pb.style.background=on?'#fff':'#1e293b'; pb.style.color=on?'var(--muted)':'#fff'; pb.style.border=on?'1px solid var(--border)':'none'; };
+  row.appendChild(pb);
+  BRANDS.forEach(b=>{
+    const btn=document.createElement('button');
+    btn.className='lbtn on'; btn.id='lbtn_'+b; btn.style.background=BRAND_COLORS[b]; btn.style.color='#fff'; btn.style.border='none';
+    btn.textContent=BRAND_LABELS[b]; btn.dataset.on='true';
+    btn.onclick=()=>{ const on=btn.dataset.on==='true'; map.setLayoutProperty('l_'+b,'visibility',on?'none':'visible'); layerVisible[b]=!on; btn.dataset.on=on?'false':'true'; btn.style.background=on?'#fff':BRAND_COLORS[b]; btn.style.color=on?'var(--muted)':'#fff'; btn.style.border=on?'1px solid var(--border)':'none'; };
+    row.appendChild(btn);
+  });
+}
+
+function buildLegend() {
+  const leg=document.getElementById('mapLegend');
+  leg.innerHTML='<div class="leg-title">Brands</div>';
+  BRANDS.forEach(b=>{ leg.innerHTML+=`<div class="leg-row"><div class="leg-dot" style="background:${BRAND_COLORS[b]}"></div><div class="leg-name">${BRAND_LABELS[b]}</div></div>`; });
+}
+
+function updateMapVis() {
+  if (!mapReady) return;
+  BRANDS.forEach(b=>{ if (!layerVisible[b]) return; if (map.getLayer('l_'+b)) map.setLayoutProperty('l_'+b,'visibility',selectedBrands.has(b)?'visible':'none'); });
+  const cnt=allPOI.filter(r=>selectedBrands.has(r.brand)).length;
+  document.getElementById('mapPtCount').textContent=`${cnt} points shown`;
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+function getPOI(){ return allPOI.filter(r=>selectedBrands.has(r.brand)); }
+
+function computeStats() {
+  const poi = getPOI();
+  const poiPts = poi.map(r=>turf.point([parseFloat(r.lon),parseFloat(r.lat)]));
+  const nmStats = allPolygons.map(p=>{
+    const coords=parseWKT(p.geometry); if(!coords) return null;
+    const buf=turf.buffer(turf.polygon([coords]),BUFFER_KM,{units:'kilometers'});
+    let count=0; poiPts.forEach(pt=>{ if(turf.booleanPointInPolygon(pt,buf)) count++; });
+    return {hood_name:p.hood_name,cluster_name:p.cluster_name,poiCount:count,covered:count>0};
+  }).filter(Boolean);
+
+  const totalNMs=nmStats.length, coveredNMs=nmStats.filter(n=>n.covered).length;
+  const coveragePct=totalNMs?Math.round(coveredNMs/totalNMs*100):0;
+  const density=coveredNMs?(poi.length/coveredNMs).toFixed(2):'0.00';
+
+  const clusterMap={};
+  nmStats.forEach(n=>{ const c=n.cluster_name||'Unknown'; if(!clusterMap[c]) clusterMap[c]={totalNMs:0,coveredNMs:0,poiCount:0}; clusterMap[c].totalNMs++; if(n.covered) clusterMap[c].coveredNMs++; clusterMap[c].poiCount+=n.poiCount; });
+
+  return {nmStats,totalNMs,coveredNMs,coveragePct,density,totalPOI:poi.length,clusterMap};
+}
+
+function updateAll() {
+  updateMapVis();
+  setTimeout(()=>{
+    const s=computeStats();
+    renderOverall(s); renderNMTable(s); renderClusterTable(s); renderClusterCards(s);
+  },20);
+}
+
+function renderOverall(s) {
+  setText('oNMCov',s.coveredNMs); setText('oNMDesc',`of ${s.totalNMs} total NMs`); setW('oNMBar',s.coveragePct);
+  setText('oCovPct',s.coveragePct+'%'); setW('oCovBar',s.coveragePct);
+  setText('oDensity',s.density); setText('oTotal',s.totalPOI);
+  const sel=selectedBrands.size===BRANDS.length?'all brands':selectedBrands.size===0?'no brands selected':`${selectedBrands.size} brand${selectedBrands.size>1?'s':''} selected`;
+  setText('oBrandDesc',sel);
+}
+
+function renderNMTable(s) {
+  const tbody=document.getElementById('nmTbody');
+  const rows=[...s.nmStats].sort((a,b)=>b.poiCount-a.poiCount);
+  if (!rows.length){ tbody.innerHTML='<tr><td colspan="4"><div class="empty">No data</div></td></tr>'; return; }
+  tbody.innerHTML=rows.map(n=>`<tr><td style="font-weight:600;max-width:150px;white-space:normal;font-size:12px;">${n.hood_name||'—'}</td><td style="color:var(--muted);font-size:11px;">${n.cluster_name||'—'}</td><td class="r"><span class="badge ${n.poiCount>0?'bb':'bx'}">${n.poiCount}</span></td><td class="r"><span class="badge ${n.covered?'bg':'bx'}">${n.covered?'✓ Yes':'—'}</span></td></tr>`).join('');
+}
+
+function renderClusterTable(s) {
+  const tbody=document.getElementById('clusterTbody');
+  const rows=Object.entries(s.clusterMap).sort((a,b)=>b[1].poiCount-a[1].poiCount);
+  if (!rows.length){ tbody.innerHTML='<tr><td colspan="5"><div class="empty">No data</div></td></tr>'; return; }
+  tbody.innerHTML=rows.map(([name,c])=>{
+    const pct=c.totalNMs?Math.round(c.coveredNMs/c.totalNMs*100):0;
+    const col=pct>=66?'var(--green)':pct>=33?'var(--amber)':'var(--red)';
+    return `<tr><td style="font-weight:600;max-width:140px;white-space:normal;font-size:12px;">${name}</td><td class="r">${c.totalNMs}</td><td class="r"><span class="badge ${c.coveredNMs>0?'bg':'bx'}">${c.coveredNMs}</span></td><td class="r"><div class="mbar"><div class="mbar-t"><div class="mbar-f" style="width:${pct}%;background:${col}"></div></div><span class="mbar-p">${pct}%</span></div></td><td class="r"><span class="badge bb">${c.poiCount}</span></td></tr>`;
+  }).join('');
+}
+
+function renderClusterCards(s) {
+  const wrap=document.getElementById('clusterStatCards');
+  const rows=Object.entries(s.clusterMap).sort((a,b)=>{ const pa=a[1].totalNMs?a[1].coveredNMs/a[1].totalNMs:0; const pb=b[1].totalNMs?b[1].coveredNMs/b[1].totalNMs:0; return pb-pa; });
+  wrap.innerHTML=rows.map(([name,c])=>{
+    const pct=c.totalNMs?Math.round(c.coveredNMs/c.totalNMs*100):0;
+    const col=pct>=66?'var(--green)':pct>=33?'var(--amber)':'var(--red)';
+    const density=c.coveredNMs?(c.poiCount/c.coveredNMs).toFixed(1):'0.0';
+    return `<div class="cl-stat-card">
+      <div class="cl-name">${name}</div>
+      <div class="cl-grid">
+        <div><div class="cl-metric-lbl">NMs Covered</div><div class="cl-metric-val" style="color:${col}">${c.coveredNMs}<span style="font-size:12px;color:var(--muted);font-weight:400">/${c.totalNMs}</span></div></div>
+        <div><div class="cl-metric-lbl">Coverage</div><div class="cl-metric-val" style="color:${col}">${pct}%</div></div>
+        <div><div class="cl-metric-lbl">Density</div><div class="cl-metric-val" style="color:var(--amber)">${density}</div></div>
+        <div><div class="cl-metric-lbl">Total POI</div><div class="cl-metric-val" style="color:var(--accent)">${c.poiCount}</div></div>
+      </div>
+      <div class="cl-bar"><div class="cl-bar-f" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function setText(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function setW(id,p){ const el=document.getElementById(id); if(el) el.style.width=p+'%'; }
+</script>
+</body>
+</html>
